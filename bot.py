@@ -24,20 +24,20 @@ def contains_link(text):
 @app.on_message(filters.command("start"))
 async def start(client, message):
     buttons = [
-        [InlineKeyboardButton("ð Owner", url="https://t.me/moh_maya_official"),
-         InlineKeyboardButton("ð¢ Update", url="https://t.me/otploothub")],
-        [InlineKeyboardButton("â Add to Group", url=f"https://t.me/{(await client.get_me()).username}?startgroup=true")]
+        [InlineKeyboardButton("👑 Owner", url="https://t.me/moh_maya_official"),
+         InlineKeyboardButton("📢 Update", url="https://t.me/otploothub")],
+        [InlineKeyboardButton("➕ Add to Group", url=f"https://t.me/{(await client.get_me()).username}?startgroup=true")]
     ]
     await message.reply_photo(
         photo="https://graph.org/file/e7d8fcbcd6b0ba2b334d5-431de28784638bf363.jpg",
         caption=(
-            "ð¤ ð¦ðððð ð²ð¾ð¼ððððð ð±ðð»ðð ð¡ï¸\n\n"
-            "ð¬ð¼ðð¿ ðð¹ð¹-ðð»-ð¢ð»ð² ð´ðð®ð¿ð± ð³ð¼ð¿ ð§ð²ð¹ð²ð´ð¿ð®ðº ðð¿ð¼ðð½ð.\n"
-            "ð Link Protection\n"
-            "ð§  Abuse Filter\n"
-            "â NSFW Filter\n"
-            "ð File Blocking\n"
-            "ð Edited Message Deletion"
+            "🤖 𝖦𝗋𝗈𝗎𝗉 𝖲𝖾𝖼𝗎𝗋𝗂𝗍𝗒 𝖱𝗈𝖻𝗈𝗍 🛡️\n\n"
+            "𝗬𝗼𝘂𝗿 𝗔𝗹𝗹-𝗜𝗻-𝗢𝗻𝗲 𝗴𝘂𝗮𝗿𝗱 𝗳𝗼𝗿 𝗧𝗲𝗹𝗲𝗴𝗿𝗮𝗺 𝗚𝗿𝗼𝘂𝗽𝘀.\n"
+            "🔗 Link Protection\n"
+            "🧠 Abuse Filter\n"
+            "⛔ NSFW Filter\n"
+            "📎 File Blocking\n"
+            "📝 Edited Message Deletion"
         ),
         reply_markup=InlineKeyboardMarkup(buttons)
     )
@@ -54,7 +54,9 @@ async def ping(_, message):
 @app.on_chat_member_updated()
 async def joined_group(client, member):
     if member.new_chat_member.user.id == (await client.get_me()).id:
-        await client.send_message(OWNER_ID, f"â Bot added to group: {member.chat.title} ({member.chat.id})")
+        await client.send_message(OWNER_ID, f"✅ Bot added to group: {member.chat.title} ({member.chat.id})")
+
+# ----------- Message Monitoring -------------
 
 # ----------- Message Monitoring -------------
 @app.on_message(filters.group & filters.text)
