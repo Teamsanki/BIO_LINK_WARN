@@ -1,125 +1,115 @@
-import telebot
-from telebot import types
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+import requests
+import os
 import time
-import datetime
 
-API_TOKEN = '8084717420:AAEiFPyCnOzJpQqWyUxlv9E9vv0xxytYNZI'
-bot = telebot.TeleBot(API_TOKEN)
+# ----------- Bot Config -------------
+API_ID = 22243185
+API_HASH = "39d926a67155f59b722db787a23893ac"
+BOT_TOKEN = "7018151520:AAGs4icpwmVhMRmdzXD1mGqZMVWcirIIdTY"
+OWNER_ID = 5311223486
+NSFW_API_KEY = "000c1386-b011-4cea-8db0-a181b31e3718"
 
-# Set your logger group chat_id here
-LOGGER_GROUP_CHAT_ID = '-1002148651992'
+app = Client("GroupSecurityBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# Set the bot owner's user ID (replace with your actual user ID)
-OWNER_USER_ID = '7877197608'
+# ----------- Banned Words & Links -------------
+ABUSE_WORDS = ["cp", "ncert", "physics wallah", "aakash", "byjus", "dick", "madarchod", "bsdk", "sex", "asshole", "lund", "randi", "lode"]
+BANNED_EXTENSIONS = [".pdf", ".gif", ".apk", ".zip", ".exe", ".txt", ".html", ".php", ".py"]
 
-# Store user bio warnings and interactions
-user_bio_warnings = {}
-interaction_logs = []
+def contains_link(text):
+    return any(x in text for x in ["http://", "https://", "t.me", "www."])
 
-# Function to log messages to the logger group
-def log_to_logger_group(log_message):
-    bot.send_message(LOGGER_GROUP_CHAT_ID, log_message)
-
-# Function to handle /start command and log user interactions in DM
-@bot.message_handler(commands=['start'])
-def handle_start_command(message):
-    # Log user start interaction in DM (name, username, user_id)
-    log_message = f"User @{message.from_user.username} ({message.from_user.first_name}) with ID {message.from_user.id} started the bot in DM."
-    log_to_logger_group(log_message)
-
-    # Attractive welcome message with buttons
-    photo_url = 'https://graph.org/file/6c0db28a848ed4dacae56-93b1bc1873b2494eb2.jpg'  # Replace with actual image URL
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("Owner", url="https://t.me/TSGCODER"))
-    markup.add(types.InlineKeyboardButton("Support", url="https://t.me/matalbi_duniya"))
-    markup.add(types.InlineKeyboardButton("Start Exploring", callback_data="explore"))
-
-    welcome_message = """
-    **Welcome to Lɪɴᴋ Usᴇʀ Wᴀʀɴ 🤖!**
-
-    Hi, I'm your personal assistant here to help you with [brief description of bot's purpose]. Whether you're looking for [features of the bot], I’ve got you covered!
-
-    🌟 Here's what I can do for you:
-    - [Add me to your group for bio link warning detection]
-    - [This bot is completely safe, created by TEAM SANKI]
-
-    Tap on the buttons below to get started:
-
-    🚀 **Let's make your experience awesome!**
-    """
-
-    bot.send_photo(
-        message.chat.id, 
-        photo_url, 
-        caption=welcome_message, 
-        parse_mode='Markdown', 
-        reply_markup=markup
+# ----------- Start Command -------------
+@app.on_message(filters.command("start"))
+async def start(client, message):
+    buttons = [
+        [InlineKeyboardButton("ð Owner", url="https://t.me/moh_maya_official"),
+         InlineKeyboardButton("ð¢ Update", url="https://t.me/otploothub")],
+        [InlineKeyboardButton("â Add to Group", url=f"https://t.me/{(await client.get_me()).username}?startgroup=true")]
+    ]
+    await message.reply_photo(
+        photo="https://graph.org/file/e7d8fcbcd6b0ba2b334d5-431de28784638bf363.jpg",
+        caption=(
+            "ð¤ ð¦ðððð ð²ð¾ð¼ððððð ð±ðð»ðð ð¡ï¸\n\n"
+            "ð¬ð¼ðð¿ ðð¹ð¹-ðð»-ð¢ð»ð² ð´ðð®ð¿ð± ð³ð¼ð¿ ð§ð²ð¹ð²ð´ð¿ð®ðº ðð¿ð¼ðð½ð.\n"
+            "ð Link Protection\n"
+            "ð§  Abuse Filter\n"
+            "â NSFW Filter\n"
+            "ð File Blocking\n"
+            "ð Edited Message Deletion"
+        ),
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-# Function to check if a user in a group has a link in their bio
-def check_and_warn_users(chat_id):
-    try:
-        members = bot.get_chat_members(chat_id)  # Retrieve all members of the group
-        for member in members:
-            # Retrieve user bio one by one using get_chat_member
-            member_info = bot.get_chat_member(chat_id, member.user.id)
-            bio = member_info.user.bio if member_info.user.bio else "No bio"
-            
-            # Check for any links in the bio (http:// or https://)
-            if 'http://' in bio or 'https://' in bio:
-                # Send warning message mentioning the user
-                bot.send_message(chat_id, f"@{member.user.username}, please remove the link from your bio within 1 hour. If not, you might be muted.")
-                user_bio_warnings[member.user.id] = time.time()  # Track when the warning was sent
-                start_timer(member.user.id, chat_id)
-    except Exception as e:
-        print(f"Error checking users: {e}")
+# ----------- Ping Command -------------
+@app.on_message(filters.command("ping"))
+async def ping(_, message):
+    start = time.time()
+    m = await message.reply("Pinging...")
+    end = time.time()
+    await m.edit(f"Pong! {round((end - start) * 1000)} ms")
 
-# Timer to mute users who don't remove links within 1 hour
-def start_timer(user_id, chat_id):
-    time.sleep(3600)  # Wait for 1 hour
-    if user_id in user_bio_warnings and time.time() - user_bio_warnings[user_id] > 3600:
-        if user_id != OWNER_USER_ID:  # Prevent muting the bot owner
-            bot.restrict_chat_member(chat_id, user_id, can_send_messages=False)  # Mute user
-            bot.send_message(chat_id, f"@{user_id} has been muted for not removing the link from their bio.")
-        else:
-            bot.send_message(chat_id, f"Owner @ {OWNER_USER_ID} is not muted. Mute action skipped.")
+# ----------- New Group Joined -------------
+@app.on_chat_member_updated()
+async def joined_group(client, member):
+    if member.new_chat_member.user.id == (await client.get_me()).id:
+        await client.send_message(OWNER_ID, f"â Bot added to group: {member.chat.title} ({member.chat.id})")
 
-# Function to check if the bot has ban permissions in the group
-def has_ban_permission(chat_id):
-    try:
-        chat_member = bot.get_chat_member(chat_id, bot.get_me().id)
-        return chat_member.status in ['administrator', 'creator'] and chat_member.can_restrict_members
-    except Exception as e:
-        print(f"Error checking permissions: {e}")
-        return False
+# ----------- Message Monitoring -------------
+@app.on_message(filters.group & filters.text)
+async def monitor_messages(client, message: Message):
+    text = message.text.lower()
+    if len(text) > 250 or contains_link(text) or any(bad in text for bad in ABUSE_WORDS):
+        await message.delete()
+        await message.reply(f"{message.from_user.mention} Ye sab krna hai to dusre group me kiya kro idhar nahi samjha ð¡.!")
 
-# Function to handle when the bot is added to a group
-@bot.message_handler(content_types=['new_chat_members'])
-def log_new_group(message):
-    if message.new_chat_members:
-        for new_member in message.new_chat_members:
-            if new_member.id == bot.get_me().id:  # If it's the bot being added
-                log_message = f"User @{message.from_user.username} ({message.from_user.first_name}) added the bot to the group {message.chat.title}."
-                log_to_logger_group(log_message)
+# ----------- Edited Messages Delete -------------
+@app.on_message(filters.group)
+async def edited_message_check(client, message):
+    if message.edit_date:
+        await message.delete()
 
-                # Check for bio links in the group members
-                check_and_warn_users(message.chat.id)
+# ----------- Banned File Extensions Delete -------------
+@app.on_message(filters.group & filters.document)
+async def delete_banned_files(client, message):
+    filename = message.document.file_name.lower()
+    if any(filename.endswith(ext) for ext in BANNED_EXTENSIONS):
+        await message.delete()
+        await message.reply(f"{message.from_user.mention} File not allowed.")
 
-# Function to handle banning users in the group
-@bot.message_handler(commands=['ban'])
-def ban_user(message):
-    # Only allow the bot owner to ban
-    if message.from_user.id == bot.get_me().id:
-        bot.send_message(message.chat.id, "You can't ban the bot itself!")
+# ----------- NSFW Sticker Check -------------
+@app.on_message(filters.group & filters.sticker)
+async def nsfw_sticker(client, message):
+    # Ignore animated/video stickers
+    if message.sticker.is_animated or message.sticker.is_video:
         return
-    
-    banned_user = message.reply_to_message.from_user
-    if banned_user.id == bot.get_me().id:
-        bot.send_message(message.chat.id, "Hᴇᴇ ʙʜᴀɪ ᴋʏᴀ ᴅɪᴋᴋᴀᴛ ʜᴀɪ ᴛᴜᴍʜᴇ ᴛᴜᴍ ᴍᴇʀᴇ ᴏᴡɴᴇʀ ᴋᴋᴏ ʙᴀɴ ᴋʀɴᴇ ᴘʀ Kᴀʜᴇ ᴛᴜʟᴇ ʜᴏ😏")
-        return
-    
-    bot.kick_chat_member(message.chat.id, banned_user.id)
-    bot.send_message(message.chat.id, f"User @{banned_user.username} has been banned.")
 
-# Polling loop to keep the bot running
-bot.polling(non_stop=True)
+    file_path = await message.download()
+    try:
+        with open(file_path, "rb") as f:
+            response = requests.post(
+                "https://api.deepai.org/api/nsfw-detector",
+                headers={"api-key": NSFW_API_KEY},
+                files={'image': f}
+            )
+        response.raise_for_status()
+        data = response.json()
+
+        nsfw_score = data.get("output", {}).get("nsfw_score", 0)
+        if nsfw_score > 0.7:
+            await message.delete()
+            await message.reply(
+                f"{message.from_user.mention} Wtf bhai kya bhej raha hai NSFW sticker!"
+            )
+    except requests.exceptions.RequestException as e:
+        print("Network error during NSFW check:", e)
+    except Exception as e:
+        print("General error in NSFW detection:", e)
+    finally:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+# ----------- Bot Start -------------
+print("Bot is running...")
+app.run()
